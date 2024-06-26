@@ -1,112 +1,120 @@
-#!/usr/bin/env python
-# coding: utf-8
+import streamlit as st
+from prettytable import PrettyTable
 
-# In[ ]:
+class Empresa:
+    def __init__(self, nombre, industria):
+        self.nombre = nombre
+        self.industria = industria
+        self.capital = 1000
+        self.ingresos = 300 if industria == "tecnología" else 200 if industria == "manufactura" else 150
+        self.gastos = 100 if industria == "tecnología" else 80 if industria == "manufactura" else 50
+        self.deuda = 0
+        self.tasa_interes = 0.05
+        self.inversion_en_marketing = 0
+        self.desarrollo_producto = False
+        self.empleados = 10 if industria == "tecnología" else 20 if industria == "manufactura" else 5
+        self.historia = ["La empresa fue fundada con la visión de revolucionar su industria."]
+        self.balance_historial = []
+
+    def calcular_intereses(self):
+        return self.deuda * self.tasa_interes
+
+    def calcular_balance(self):
+        intereses = self.calcular_intereses()
+        balance = self.capital + self.ingresos - self.gastos - intereses
+        return balance
+
+    def tomar_prestamo(self, cantidad):
+        self.deuda += cantidad
+        self.capital += cantidad
+        self.historia.append(f"Se tomó un préstamo de {cantidad}.")
+        self.actualizar_historial()
+
+    def pago_deuda(self, cantidad):
+        pago = min(self.deuda, cantidad)
+        self.deuda -= pago
+        self.capital -= pago
+        self.historia.append(f"Se pagó una deuda de {cantidad}.")
+        self.actualizar_historial()
+
+    def actualizar_finanzas(self, decision, cantidad):
+        if decision == "invertir":
+            self.capital -= cantidad
+            self.gastos += cantidad * 0.05
+            self.historia.append(f"Inversión de {cantidad} en infraestructura.")
+        elif decision == "marketing":
+            self.inversion_en_marketing += cantidad
+            self.capital -= cantidad
+            self.historia.append(f"Campaña de marketing lanzada con una inversión de {cantidad}.")
+        elif decision == "producto":
+            if not self.desarrollo_producto:
+                self.capital -= cantidad
+                self.ingresos += 150 if self.industria == "tecnología" else 100
+                self.desarrollo_producto = True
+                self.historia.append(f"Desarrollo de un nuevo producto completado con {cantidad}.")
+        elif decision == "contratar":
+            num = cantidad // 100  # Suponemos que cada empleado cuesta 100
+            self.empleados += num
+            self.gastos += num * 80
+            self.historia.append(f"Contratación de {num} nuevos empleados.")
+        self.actualizar_historial()
+
+    def actualizar_historial(self):
+        balance = self.calcular_balance()
+        self.balance_historial.append({
+            "capital": self.capital,
+            "ingresos": self.ingresos,
+            "gastos": self.gastos,
+            "deuda": self.deuda,
+            "intereses": self.calcular_intereses(),
+            "balance": balance,
+            "empleados": self.empleados
+        })
+
+    def obtener_balance_tabla(self):
+        tabla = PrettyTable()
+        columnas = ["Capital", "Ingresos", "Gastos", "Deuda", "Intereses", "Balance", "Empleados"]
+        tabla.field_names = columnas
+        for entry in self.balance_historial:
+            tabla.add_row([entry[col.lower()] for col in columnas])
+        return tabla
+
+def main():
+    st.title("Simulador Empresarial")
+
+    # Datos iniciales
+    if 'empresa' not in st.session_state:
+        st.session_state.empresa = Empresa("Demo Corp", "tecnología")
+
+    empresa = st.session_state.empresa
+
+    st.header(f"Estado Financiero de {empresa.nombre}")
+
+    balance_tabla = empresa.obtener_balance_tabla()
+    st.text(balance_tabla)
+
+    st.subheader("Realizar una Acción")
+    acciones = ["invertir", "marketing", "producto", "contratar", "tomar préstamo", "pagar deuda"]
+    accion = st.selectbox("Selecciona una acción", acciones)
+    cantidad = st.number_input("Cantidad", min_value=0, step=100)
+
+    if st.button("Realizar Acción"):
+        if cantidad > 0:
+            empresa.actualizar_finanzas(accion, cantidad) if accion in ["invertir", "marketing", "producto", "contratar"] else None
+            empresa.tomar_prestamo(cantidad) if accion == "tomar préstamo" else None
+            empresa.pago_deuda(cantidad) if accion == "pagar deuda" else None
+            st.success(f"Acción '{accion}' realizada con éxito.")
+        else:
+            st.error("Introduce una cantidad válida mayor que 0.")
+
+    if st.button("Ver Historia"):
+        historia_texto = "\n".join(empresa.historia)
+        st.text(historia_texto)
+
+if __name__ == "__main__":
+    main()
 
 
-import random
-import matplotlib.pyplot as plt
-import matplotlib.animation as animation
-from math import cos, sin, pi
-
-# Números y colores en una ruleta europea
-numeros_ruleta = [0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26]
-colores_ruleta = ['green'] + ['black' if i % 2 == 0 else 'red' for i in range(1, 37)]
-
-# Función para girar la ruleta
-def girar_ruleta():
-    return random.choice(numeros_ruleta)
-
-# Función para mostrar la ruleta girando
-def mostrar_ruleta(resultado):
-    fig, ax = plt.subplots(figsize=(8, 8))
-    ax.set_xlim(-1.5, 1.5)
-    ax.set_ylim(-1.5, 1.5)
-
-    def init():
-        ax.clear()
-        ax.set_xlim(-1.5, 1.5)
-        ax.set_ylim(-1.5, 1.5)
-        for i, num in enumerate(numeros_ruleta):
-            angulo = 2 * pi * i / 37
-            x = 1.2 * cos(angulo)
-            y = 1.2 * sin(angulo)
-            ax.text(x, y, str(num), horizontalalignment='center', verticalalignment='center',
-                    fontsize=10, color='white' if colores_ruleta[i] == 'black' else 'black', 
-                    bbox=dict(facecolor=colores_ruleta[i], edgecolor='none', boxstyle='round,pad=0.3'))
-        plt.title('Ruleta de Casino')
-        plt.axis('off')
-
-    def update(frame):
-        ax.clear()
-        ax.set_xlim(-1.5, 1.5)
-        ax.set_ylim(-1.5, 1.5)
-        current_angle = 2 * pi * frame / 37
-        for i, num in enumerate(numeros_ruleta):
-            angulo = 2 * pi * i / 37
-            x = 1.2 * cos(angulo + current_angle)
-            y = 1.2 * sin(angulo + current_angle)
-            ax.text(x, y, str(num), horizontalalignment='center', verticalalignment='center',
-                    fontsize=10, color='white' if colores_ruleta[i] == 'black' else 'black', 
-                    bbox=dict(facecolor=colores_ruleta[i], edgecolor='none', boxstyle='round,pad=0.3'))
-        
-        angulo_res = 2 * pi * resultado / 37
-        x_res = 1.4 * cos(angulo_res + current_angle)
-        y_res = 1.4 * sin(angulo_res + current_angle)
-        ax.arrow(0, 0, x_res, y_res, head_width=0.1, head_length=0.1, fc='yellow', ec='yellow')
-
-    ani = animation.FuncAnimation(fig, update, frames=range(37), init_func=init, blit=False, repeat=False)
-    plt.show()
-
-# Función para apostar
-def apostar(numero, cantidad):
-    resultado = girar_ruleta()
-    mostrar_ruleta(resultado)
-    print(f"La ruleta giró y cayó en el número {resultado} ({colores_ruleta[numeros_ruleta.index(resultado)]}).")
-    
-    if numero == resultado:
-        ganancia = cantidad * 35  # Ganancia de 35 a 1 si aciertas el número
-        print(f"¡Felicidades! Ganaste {ganancia} unidades.")
-        return ganancia
-    else:
-        print(f"Lo siento, perdiste {cantidad} unidades.")
-        return -cantidad
-
-# Función principal del juego
-def jugar_ruleta():
-    saldo = 1000  # Saldo inicial del jugador
-    while True:
-        print(f"\nTu saldo actual es: {saldo} unidades.")
-        if saldo <= 0:
-            print("Te has quedado sin saldo. ¡Gracias por jugar!")
-            break
-        
-        try:
-            numero_apuesta = int(input("Ingresa el número al que deseas apostar (0-36): "))
-            cantidad_apuesta = int(input("Ingresa la cantidad que deseas apostar: "))
-        except ValueError:
-            print("Entrada inválida. Por favor, ingresa un número válido.")
-            continue
-        
-        if numero_apuesta < 0 or numero_apuesta > 36:
-            print("Número inválido. Por favor, ingresa un número entre 0 y 36.")
-            continue
-        if cantidad_apuesta > saldo:
-            print("No tienes suficiente saldo para esa apuesta. Inténtalo de nuevo.")
-            continue
-        
-        saldo += apostar(numero_apuesta, cantidad_apuesta)
-        
-        continuar = input("¿Deseas seguir jugando? (s/n): ").lower()
-        if continuar != 's':
-            print("Gracias por jugar. ¡Hasta la próxima!")
-            break
-
-# Iniciar el juego
-jugar_ruleta()
-
-
-# In[ ]:
 
 
 
