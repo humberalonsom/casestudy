@@ -87,32 +87,37 @@ class Empresa:
             tabla.add_row([entry[col] for col in columnas])
         return tabla
 
+def mostrar_historia(empresa):
+    st.sidebar.header("Historia de la Empresa")
+    for evento in empresa.historia:
+        st.sidebar.write(evento)
+
+def mostrar_balance(empresa):
+    st.header(f"Estado Financiero de {empresa.nombre}")
+    balance_tabla = empresa.obtener_balance_tabla()
+    st.text(balance_tabla)
+
 def main():
     st.set_page_config(layout="wide")
     st.title("Simulador Empresarial")
 
     if 'empresa' not in st.session_state:
         # Selección de la industria
-        st.session_state.industria = st.selectbox("Elige la industria", ["tecnología", "manufactura", "servicios"])
-        st.session_state.empresa = Empresa(generar_nombre_empresa(), st.session_state.industria)
+        industria = st.selectbox("Elige la industria", ["tecnología", "manufactura", "servicios"])
+        st.session_state.empresa = Empresa(generar_nombre_empresa(), industria)
         st.experimental_rerun()
 
     empresa = st.session_state.empresa
 
-    # Barra lateral para la historia
-    with st.sidebar:
-        st.header("Historia de la Empresa")
-        for evento in empresa.historia:
-            st.write(evento)
+    # Mostrar historia
+    mostrar_historia(empresa)
 
-    # Columna principal para el balance y las acciones
-    col1, col2 = st.columns([2, 1])
+    # Columnas para secciones
+    col1, col2 = st.columns([3, 2])
 
     with col1:
-        st.header(f"Estado Financiero de {empresa.nombre}")
-
-        balance_tabla = empresa.obtener_balance_tabla()
-        st.text(balance_tabla)
+        # Mostrar balance
+        mostrar_balance(empresa)
 
     with col2:
         st.subheader("Realizar una Acción")
