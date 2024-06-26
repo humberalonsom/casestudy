@@ -1,5 +1,12 @@
 import streamlit as st
 from prettytable import PrettyTable
+import random
+
+# Generador de nombres aleatorios para la empresa
+def generar_nombre_empresa():
+    adjetivos = ["Innovadora", "Global", "Creativa", "Dinámica", "Futurista"]
+    sustantivos = ["Tech", "Industries", "Solutions", "Enterprises", "Corporation"]
+    return random.choice(adjetivos) + " " + random.choice(sustantivos)
 
 class Empresa:
     def __init__(self, nombre, industria):
@@ -62,31 +69,38 @@ class Empresa:
     def actualizar_historial(self):
         balance = self.calcular_balance()
         self.balance_historial.append({
-            "capital": self.capital,
-            "ingresos": self.ingresos,
-            "gastos": self.gastos,
-            "deuda": self.deuda,
-            "intereses": self.calcular_intereses(),
-            "balance": balance,
-            "empleados": self.empleados
+            "Año": len(self.balance_historial) + 1,
+            "Capital": self.capital,
+            "Ingresos": self.ingresos,
+            "Gastos": self.gastos,
+            "Deuda": self.deuda,
+            "Intereses": self.calcular_intereses(),
+            "Balance": balance,
+            "Empleados": self.empleados
         })
 
     def obtener_balance_tabla(self):
         tabla = PrettyTable()
-        columnas = ["Capital", "Ingresos", "Gastos", "Deuda", "Intereses", "Balance", "Empleados"]
+        columnas = ["Año", "Capital", "Ingresos", "Gastos", "Deuda", "Intereses", "Balance", "Empleados"]
         tabla.field_names = columnas
         for entry in self.balance_historial:
-            tabla.add_row([entry[col.lower()] for col in columnas])
+            tabla.add_row([entry[col] for col in columnas])
         return tabla
 
 def main():
     st.title("Simulador Empresarial")
 
-    # Datos iniciales
     if 'empresa' not in st.session_state:
-        st.session_state.empresa = Empresa("Demo Corp", "tecnología")
+        # Selección de la industria
+        st.session_state.industria = st.selectbox("Elige la industria", ["tecnología", "manufactura", "servicios"])
+        st.session_state.empresa = Empresa(generar_nombre_empresa(), st.session_state.industria)
+        st.experimental_rerun()
 
     empresa = st.session_state.empresa
+
+    st.sidebar.header("Historia de la Empresa")
+    for evento in empresa.historia:
+        st.sidebar.write(evento)
 
     st.header(f"Estado Financiero de {empresa.nombre}")
 
@@ -100,22 +114,16 @@ def main():
 
     if st.button("Realizar Acción"):
         if cantidad > 0:
-            empresa.actualizar_finanzas(accion, cantidad) if accion in ["invertir", "marketing", "producto", "contratar"] else None
-            empresa.tomar_prestamo(cantidad) if accion == "tomar préstamo" else None
-            empresa.pago_deuda(cantidad) if accion == "pagar deuda" else None
+            if accion in ["invertir", "marketing", "producto", "contratar"]:
+                empresa.actualizar_finanzas(accion, cantidad)
+            elif accion == "tomar préstamo":
+                empresa.tomar_prestamo(cantidad)
+            elif accion == "pagar deuda":
+                empresa.pago_deuda(cantidad)
             st.success(f"Acción '{accion}' realizada con éxito.")
+            st.experimental_rerun()
         else:
             st.error("Introduce una cantidad válida mayor que 0.")
 
-    if st.button("Ver Historia"):
-        historia_texto = "\n".join(empresa.historia)
-        st.text(historia_texto)
-
 if __name__ == "__main__":
     main()
-
-
-
-
-
-
