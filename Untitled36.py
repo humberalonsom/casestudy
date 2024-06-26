@@ -88,6 +88,7 @@ class Empresa:
         return tabla
 
 def main():
+    st.set_page_config(layout="wide")
     st.title("Simulador Empresarial")
 
     if 'empresa' not in st.session_state:
@@ -98,32 +99,39 @@ def main():
 
     empresa = st.session_state.empresa
 
-    st.sidebar.header("Historia de la Empresa")
-    for evento in empresa.historia:
-        st.sidebar.write(evento)
+    # Barra lateral para la historia
+    with st.sidebar:
+        st.header("Historia de la Empresa")
+        for evento in empresa.historia:
+            st.write(evento)
 
-    st.header(f"Estado Financiero de {empresa.nombre}")
+    # Columna principal para el balance y las acciones
+    col1, col2 = st.columns([2, 1])
 
-    balance_tabla = empresa.obtener_balance_tabla()
-    st.text(balance_tabla)
+    with col1:
+        st.header(f"Estado Financiero de {empresa.nombre}")
 
-    st.subheader("Realizar una Acción")
-    acciones = ["invertir", "marketing", "producto", "contratar", "tomar préstamo", "pagar deuda"]
-    accion = st.selectbox("Selecciona una acción", acciones)
-    cantidad = st.number_input("Cantidad", min_value=0, step=100)
+        balance_tabla = empresa.obtener_balance_tabla()
+        st.text(balance_tabla)
 
-    if st.button("Realizar Acción"):
-        if cantidad > 0:
-            if accion in ["invertir", "marketing", "producto", "contratar"]:
-                empresa.actualizar_finanzas(accion, cantidad)
-            elif accion == "tomar préstamo":
-                empresa.tomar_prestamo(cantidad)
-            elif accion == "pagar deuda":
-                empresa.pago_deuda(cantidad)
-            st.success(f"Acción '{accion}' realizada con éxito.")
-            st.experimental_rerun()
-        else:
-            st.error("Introduce una cantidad válida mayor que 0.")
+    with col2:
+        st.subheader("Realizar una Acción")
+        acciones = ["invertir", "marketing", "producto", "contratar", "tomar préstamo", "pagar deuda"]
+        accion = st.selectbox("Selecciona una acción", acciones)
+        cantidad = st.number_input("Cantidad", min_value=0, step=100)
+
+        if st.button("Realizar Acción"):
+            if cantidad > 0:
+                if accion in ["invertir", "marketing", "producto", "contratar"]:
+                    empresa.actualizar_finanzas(accion, cantidad)
+                elif accion == "tomar préstamo":
+                    empresa.tomar_prestamo(cantidad)
+                elif accion == "pagar deuda":
+                    empresa.pago_deuda(cantidad)
+                st.success(f"Acción '{accion}' realizada con éxito.")
+                st.experimental_rerun()
+            else:
+                st.error("Introduce una cantidad válida mayor que 0.")
 
 if __name__ == "__main__":
     main()
