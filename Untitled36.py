@@ -64,6 +64,14 @@ class Empresa:
             self.empleados += num
             self.gastos += num * 80
             self.historia.append(f"Contratación de {num} nuevos empleados.")
+        elif decision == "adquisición":
+            self.capital -= cantidad
+            self.ingresos += cantidad * 0.1
+            self.historia.append(f"Adquisición de una empresa con {cantidad}.")
+        elif decision == "alianza":
+            self.capital -= cantidad * 0.2
+            self.ingresos += cantidad * 0.05
+            self.historia.append(f"Formación de una alianza estratégica con {cantidad}.")
         self.actualizar_historial()
 
     def actualizar_historial(self):
@@ -121,13 +129,13 @@ def main():
 
     with col2:
         st.subheader("Realizar una Acción")
-        acciones = ["invertir", "marketing", "producto", "contratar", "tomar préstamo", "pagar deuda"]
+        acciones = ["invertir", "marketing", "producto", "contratar", "adquisición", "alianza", "tomar préstamo", "pagar deuda"]
         accion = st.selectbox("Selecciona una acción", acciones)
         cantidad = st.number_input("Cantidad", min_value=0, step=100)
 
         if st.button("Realizar Acción"):
             if cantidad > 0:
-                if accion in ["invertir", "marketing", "producto", "contratar"]:
+                if accion in ["invertir", "marketing", "producto", "contratar", "adquisición", "alianza"]:
                     empresa.actualizar_finanzas(accion, cantidad)
                 elif accion == "tomar préstamo":
                     empresa.tomar_prestamo(cantidad)
